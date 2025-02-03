@@ -13,7 +13,6 @@ public class Sudoku {
 
 	public static void main(String[] args) {
 		sudoku = new int[9][9];
-		removed = false;
 
 		if (args.length == 0) {
 			System.out.println("No sudoku provided.");
@@ -21,10 +20,20 @@ public class Sudoku {
 		}
 		
 		ReadSudoku(args);
+		long startTime = System.currentTimeMillis();
+
+		SolveSudoku();
+
+		long endTime = System.currentTimeMillis();
+		PrintBoard();
+		System.out.println("Time: " + (endTime - startTime) + " milliseconds");
+	}
+
+	private static void SolveSudoku() {
+
 		guesses = new DynamicArray();
 		guesses.append(NextGuess());
-
-		// Now solve the sudoku
+		removed = false;
 		int latest = guesses.top();
 		while (latest != -1) {
 			int x = latest % 9;
@@ -52,8 +61,6 @@ public class Sudoku {
 
 			latest = guesses.top();
 		}
-
-		PrintBoard();
 	}
 
 	private static int NextGuess() {
@@ -118,20 +125,18 @@ public class Sudoku {
 
 	private static boolean CheckValid(int startX, int startY) {
 
-		DynamicArray nums = new DynamicArray();
+		int[] nums = new int[9];
 		// Check row
 		for (int x = 0; x < 9; x++) {
 				
 			int val = sudoku[startY][x];
 			if (val == 0)
 				continue;
-			if (nums.contains(val)) {
-				//System.out.println(String.format("%d already in row %d.",val,startX+1));
+			if (nums[val-1]++ != 0) {
 				return false;
 			}
-			nums.append(val);
 
-		} nums.wipe();
+		} nums = new int[9];
 		// Check column
 		for (int y = 0; y < 9; y++) {
 			
@@ -139,13 +144,11 @@ public class Sudoku {
 			if (val == 0)
 				continue;
 
-			if (nums.contains(val)) {
-				//System.out.println(String.format("%d already in column %d.",val,startY+1));
+			if (nums[val-1]++ != 0) {
 				return false;
 			}
-			nums.append(val);
 
-		} nums.wipe();
+		} nums = new int[9];
 
 		// Check box
 		int minX = startX - startX % 3;
@@ -156,11 +159,9 @@ public class Sudoku {
 				int val = sudoku[minY + y][minX + x];
 				if (val == 0)
 					continue;
-				if (nums.contains(val)) {
-					//System.out.println(val + " already in box.");
+				if (nums[val-1]++ != 0) {
 					return false;
 				}
-				nums.append(val);
 			}
 		}
 
