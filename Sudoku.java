@@ -32,14 +32,16 @@ public class Sudoku {
 		}
 
 		ReadSudoku();
-		currentSudoku = 0;		
-
+		currentSudoku = 0;
 		long startTime = System.nanoTime();
-		for (int j = 0; j < sudokusAmount; j++)
+		
+		for (int j = 0; j < sudokusAmount; j++) {
 			SolveSudoku();
+			// PrintBoard();
+			currentSudoku++;
+		}
 		long endTime = System.nanoTime();
 
-		PrintBoard();
 		SaveResults();
 		System.out.println("Time: " + ((float)(endTime - startTime) / (float)1000000) + " milliseconds");
 	}
@@ -67,50 +69,37 @@ public class Sudoku {
 	}
 
 	private static void SolveSudoku() {
-		
+
 		guesses = new DynamicArray();
 		guesses.append(NextGuess());
 		removed = false;
 		int latest = guesses.top();
 		
-		int x = latest % 9;
-		int y = latest / 9;
-
 		while (latest != -1) {
 
-			if (sudokus[currentSudoku][y][x] < 9) {
-				sudokus[currentSudoku][y][x]++;
-				removed = false;
+			int x = latest % 9;
+			int y = latest / 9;
+			int val = sudokus[currentSudoku][y][x];
+			int next = GetNextValid(x, y, val);
 
-				if (CheckValid(x,y))
-					guesses.append(NextGuess());
-
-			} else {
-
-				if (CheckValid(x,y) && !removed) {
-					guesses.append(NextGuess());
-					latest = guesses.top();
-					x = latest % 9;
-					y = latest / 9;
-					continue;
-				}
-				
+			if (next == -1) { // No more guesses possible for the square
 				sudokus[currentSudoku][y][x] = 0;
-				removed = true;
 				guesses.pop();
+				latest = guesses.top();
+				continue;
 			}
-
-			latest = guesses.top();
-			x = latest % 9;
-			y = latest / 9;
 			
-		} currentSudoku++;
+			sudokus[currentSudoku][y][x] = next;
+			guesses.append(NextGuess());
+			latest = guesses.top();
+			
+		}
 	}
 
 	private static int NextGuess() {
 		int latest_guess = guesses.top();
 		int latestX = latest_guess % 9;
-		int latestY = (int)((latest_guess - latestX) / 9);
+		int latestY = latest_guess / 9;
 
 		do {
 			if (latestY == 8 && latestX == 8)
@@ -154,53 +143,41 @@ public class Sudoku {
 
 	}
 
-	private static boolean CheckValid(int startX, int startY) {
-
-		int nums = 0;
+	private static int GetNextValid(int startX, int startY, int current) {
+		// Get the first allowed number that's greater than the one already in the cell
+		int used = 0;
+	
 		// Check row
 		for (int x = 0; x < 9; x++) {
-			
-			int val = sudokus[currentSudoku][startY][x]-1;
-			
-			if (val == -1)
-				continue;
-			int shifted = 1<<val;
-			if ((nums & shifted) != 0) {
-				return false;
-			} nums |= shifted;
-
-		} nums = 0;
+			int val = sudokus[currentSudoku][startY][x];
+			used |= (1<<val);
+		}
+	
 		// Check column
 		for (int y = 0; y < 9; y++) {
-			
-			int val = sudokus[currentSudoku][y][startX]-1;
-			
-			if (val == -1)
-				continue;
-			int shifted = 1<<val;
-			if ((nums & shifted) != 0) {
-				return false;
-			} nums |= shifted;
-
-		} nums = 0;
-
+			int val = sudokus[currentSudoku][y][startX];
+			used |= (1<<val);
+		}
+	
 		// Check box
 		int minX = startX - startX % 3;
 		int minY = startY - startY % 3;
 		for (int y = 0; y < 3; y++) {
 			for (int x = 0; x < 3; x++) {
-				
-				int val = sudokus[currentSudoku][minY + y][minX + x] - 1;
-				if (val == -1)
-					continue;
-				int shifted = 1<<val;
-				if ((nums & shifted) != 0) {
-					return false;
-				} nums |= shifted;
+				int val = sudokus[currentSudoku][minY + y][minX + x];
+				used |= (1<<val);
 			}
 		}
-
-		return true;
+	
+		// Start at the next possible number and find the first one that is legal
+		for (int num = current + 1; num <= 9; num++) {
+			if ((used & (1<<num)) == 0) {
+				return num;
+			}
+		}
+	
+		// No valid number found
+		return -1;
 	}
 
 	private static void PrintBoard() {
@@ -221,8 +198,7 @@ public class Sudoku {
 				else
 					System.out.println(temp + "\n");
 
-
-			}
+			} System.out.println("\n");
 		} catch (Exception e) {
 			return;
 		}
