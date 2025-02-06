@@ -30,11 +30,12 @@ public class Sudoku {
 			System.out.println("No sudoku provided.");
 			return;
 		}
-		
+
 		ReadSudoku();
+		currentSudoku = 0;		
 
 		long startTime = System.nanoTime();
-		for (int i = 0; i < sudokusAmount; i++)
+		for (int j = 0; j < sudokusAmount; j++)
 			SolveSudoku();
 		long endTime = System.nanoTime();
 
@@ -71,9 +72,11 @@ public class Sudoku {
 		guesses.append(NextGuess());
 		removed = false;
 		int latest = guesses.top();
+		
+		int x = latest % 9;
+		int y = latest / 9;
+
 		while (latest != -1) {
-			int x = latest % 9;
-			int y = (int)((latest - x) / 9);
 
 			if (sudokus[currentSudoku][y][x] < 9) {
 				sudokus[currentSudoku][y][x]++;
@@ -87,6 +90,8 @@ public class Sudoku {
 				if (CheckValid(x,y) && !removed) {
 					guesses.append(NextGuess());
 					latest = guesses.top();
+					x = latest % 9;
+					y = latest / 9;
 					continue;
 				}
 				
@@ -96,6 +101,9 @@ public class Sudoku {
 			}
 
 			latest = guesses.top();
+			x = latest % 9;
+			y = latest / 9;
+			
 		} currentSudoku++;
 	}
 
@@ -156,9 +164,10 @@ public class Sudoku {
 			
 			if (val == -1)
 				continue;
-			if (nums > (nums ^= (1 << val))) {
+			int shifted = 1<<val;
+			if ((nums & shifted) != 0) {
 				return false;
-			}
+			} nums |= shifted;
 
 		} nums = 0;
 		// Check column
@@ -168,9 +177,10 @@ public class Sudoku {
 			
 			if (val == -1)
 				continue;
-			if (nums > (nums ^= (1 << val))) {
+			int shifted = 1<<val;
+			if ((nums & shifted) != 0) {
 				return false;
-			}
+			} nums |= shifted;
 
 		} nums = 0;
 
@@ -183,9 +193,10 @@ public class Sudoku {
 				int val = sudokus[currentSudoku][minY + y][minX + x] - 1;
 				if (val == -1)
 					continue;
-				if (nums > (nums ^= (1 << val))) {
+				int shifted = 1<<val;
+				if ((nums & shifted) != 0) {
 					return false;
-				}
+				} nums |= shifted;
 			}
 		}
 
